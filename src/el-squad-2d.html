@@ -114,6 +114,9 @@ CHARS.forEach(ch=>{
   ch.frames=SPRITE_IMGS[ch.key].map(d=>{const im=new Image();im.src=d.src;return{img:im,w:d.w,h:d.h};});
   ch.totalH=SPRITE_IMGS[ch.key][0].h/DPR; // world-unit height (idle)
 });
+// parallax scene layers (Erbil night)
+const SCENE={};
+for(const k in SCENE_IMGS){const im=new Image();im.src=SCENE_IMGS[k].src;SCENE[k]={img:im,w:SCENE_IMGS[k].w,h:SCENE_IMGS[k].h};}
 // draw with feet at (xC,yFeet) in world coords; s = extra device scale
 function drawChar(ch,xC,yFeet,s,flip,fi,bobPx){
   const f=ch.frames[fi||0];
@@ -223,8 +226,9 @@ cv.addEventListener('pointerdown',e=>{const p=canvasPoint(e);clickAt(p.x,p.y);})
 /* ============================= WORLD ============================= */
 const GROUND=232;
 const THEMES=[
- {sky:['#251a52','#3d2382','#7a3aa8','#2c1f62'],sun:['#ffd94f','#ff7a5c','#ff4fa3'],sunMask:'#3d2382',
-  horizon:'rgba(255,79,163,0.3)',castle:'#4a3095',grid:'rgba(190,120,255,0.32)',
+ {erbil:true,
+  sky:['#251a52','#3d2382','#7a3aa8','#2c1f62'],sun:['#ffd94f','#ff7a5c','#ff4fa3'],sunMask:'#3d2382',
+  horizon:'rgba(255,170,80,0.3)',castle:'#4a3095',grid:'rgba(190,120,255,0.32)',
   tri:['rgba(190,120,255,0.8)','rgba(120,225,255,0.8)'],groundFill:'#332268',groundEdge:'#ff4fa3',
   groundLines:'rgba(255,120,190,0.25)',platFill:'#372a70',platEdge:'#4fd8ff',palm:'#ff9ad0',palmGlow:'#ff4fa3'},
  {sky:['#0e3450','#1a5a88','#2b86a8','#12405f'],sun:['#f5ffff','#b8f0ff','#5fdcff'],sunMask:'#1a5a88',
@@ -408,7 +412,54 @@ function update(dt){
 }
 
 /* ============================= DRAW ============================= */
+function bgErbil(camX){
+  // layer 4: sky + moon (fixed, biased so the moon stays in view on portrait)
+  const s=SCENE.sky,sc=Math.max(W/s.w,H/s.h);
+  cx.drawImage(s.img,-(s.w*sc-W)*0.68,0,s.w*sc,s.h*sc);
+  cx.save();cx.translate(0,offY);
+  // layer 3: citadel on the hill — farthest, barely moves, rises above the rooftops
+  const cit=SCENE.citadel,cw=620,chh=cw*cit.h/cit.w;
+  cx.drawImage(cit.img,70-camX*0.06,174-chh,cw,chh);
+  // layer 2: lantern-lit rooftops — mid distance, tiled with overlap to hide seams
+  const ci=SCENE.city,iw=560,ih=iw*ci.h/ci.w,step=iw-70;
+  let sx=-((camX*0.35)%step)-step;
+  for(let x=sx;x<W+iw;x+=step)cx.drawImage(ci.img,x,238-ih,iw,ih);
+  // warm lantern haze where rooftops meet the bazaar
+  const hz=cx.createLinearGradient(0,160,0,238);
+  hz.addColorStop(0,'rgba(255,170,80,0)');hz.addColorStop(1,'rgba(255,150,60,0.16)');
+  cx.fillStyle=hz;cx.fillRect(0,160,W,78);
+  cx.restore();
+}
+// procedural bazaar masonry (layer 1 style) — drawn in code so platforms,
+// holes, and stairs can take any shape while matching the reference art
+function bazaarRect(x,y,w,h){
+  // patterned purple wall
+  cx.fillStyle='#3a2145';cx.fillRect(x,y+6,w,h-6);
+  const bandB=Math.min(y+6+30,y+h);
+  // diamond motif band (only on walls tall enough to hold it)
+  if(h>=30)for(let dx0=x+14;dx0<x+w-8;dx0+=26){
+    const cyy=y+19;
+    cx.fillStyle='#6d3e78';
+    cx.beginPath();cx.moveTo(dx0,cyy-6);cx.lineTo(dx0+6,cyy);cx.lineTo(dx0,cyy+6);cx.lineTo(dx0-6,cyy);cx.closePath();cx.fill();
+    cx.fillStyle='#c9743e';cx.fillRect(dx0-1,cyy-1,2,2);
+  }
+  if(y+h>bandB+4){
+    cx.strokeStyle='rgba(200,150,90,0.28)';cx.lineWidth=1;
+    cx.beginPath();cx.moveTo(x,bandB+2.5);cx.lineTo(x+w,bandB+2.5);cx.stroke();
+    // faint stone seams below
+    cx.strokeStyle='rgba(0,0,0,0.22)';
+    for(let yy=bandB+16;yy<y+h;yy+=18){cx.beginPath();cx.moveTo(x,yy);cx.lineTo(x+w,yy);cx.stroke();}
+    for(let xx=x+13;xx<x+w;xx+=26){cx.beginPath();cx.moveTo(xx,bandB+4);cx.lineTo(xx,Math.min(xx%2?y+h:y+h,y+h));cx.stroke();}
+  }
+  // light stone cap
+  cx.fillStyle='#dcc4a4';cx.fillRect(x,y,w,6);
+  cx.fillStyle='#efdcbc';cx.fillRect(x,y,w,2);
+  cx.fillStyle='#a98c6d';
+  for(let bx=x+20;bx<x+w;bx+=20)cx.fillRect(bx,y+1,1,5);
+  cx.fillStyle='rgba(90,60,40,0.55)';cx.fillRect(x,y+6,w,1);
+}
 function bg(camX){
+  if(TH.erbil){bgErbil(camX);return;}
   // sky gradient
   const grd=cx.createLinearGradient(0,0,0,H);
   grd.addColorStop(0,TH.sky[0]);grd.addColorStop(0.55,TH.sky[1]);grd.addColorStop(0.72,TH.sky[2]);grd.addColorStop(1,TH.sky[3]);
@@ -472,19 +523,23 @@ function drawWorld(){
   const c=Math.round(cam);
   bg(c);
   cx.save();cx.translate(-c,offY);
-  // palms
-  for(let i=0;i<9;i++){
+  // palms (neon themes only)
+  if(!TH.erbil)for(let i=0;i<9;i++){
     const px=170+i*360;
     if(px>c-40&&px<c+W+40)palm(px,GROUND);
   }
-  // grounds
-  for(const g of level.grounds){
-    neonRect(g[0],GROUND,g[1],H-offY-GROUND,TH.groundFill,TH.groundEdge);
-    cx.strokeStyle=TH.groundLines;
-    for(let x=g[0]+12;x<g[0]+g[1];x+=24){cx.beginPath();cx.moveTo(x,GROUND+4);cx.lineTo(x,H-offY);cx.stroke();}
+  // grounds + platforms: bazaar masonry in the Erbil theme, neon otherwise
+  if(TH.erbil){
+    for(const g of level.grounds)bazaarRect(g[0],GROUND,g[1],H-offY-GROUND);
+    for(const pl of level.plats)bazaarRect(pl[0],pl[1],pl[2],12);
+  }else{
+    for(const g of level.grounds){
+      neonRect(g[0],GROUND,g[1],H-offY-GROUND,TH.groundFill,TH.groundEdge);
+      cx.strokeStyle=TH.groundLines;
+      for(let x=g[0]+12;x<g[0]+g[1];x+=24){cx.beginPath();cx.moveTo(x,GROUND+4);cx.lineTo(x,H-offY);cx.stroke();}
+    }
+    for(const pl of level.plats)neonRect(pl[0],pl[1],pl[2],8,TH.platFill,TH.platEdge);
   }
-  // platforms
-  for(const pl of level.plats)neonRect(pl[0],pl[1],pl[2],8,TH.platFill,TH.platEdge);
   // power-up items
   for(const it of level.pows){
     if(it.got)continue;
@@ -593,7 +648,12 @@ function scanlines(){
 
 /* ---------- select screen ---------- */
 function drawSelect(){
-  bg(0);
+  const p=SCENE.promo;
+  if(p&&p.img.complete&&p.img.naturalWidth){
+    const sc=Math.max(W/p.w,H/p.h);
+    cx.drawImage(p.img,-(p.w*sc-W)*0.5,-(p.h*sc-H)*0.4,p.w*sc,p.h*sc);
+    cx.fillStyle='rgba(16,8,36,0.5)';cx.fillRect(0,0,W,H);
+  }else bg(0);
   cx.save();cx.translate(0,Math.round((H-BAND)*0.45));
   drawTextC('EL SQUAD',W/2,18,4,'#ff4fa3','#ff4fa3');
   drawTextC('CHOOSE YOUR HERO',W/2,48,1,'#aee9ff','#4fd8ff');
