@@ -10,6 +10,7 @@ import pathlib
 root = pathlib.Path(__file__).parent
 template = (root / "src" / "el-squad-2d.html").read_text()
 sprites = (root / "src" / "sprites.js").read_text()
-out = template.replace("<script>", "<script>\n" + sprites + "</script>\n<script>", 1)
+layers = (root / "src" / "layers.js").read_text()
+out = template.replace("<script>", "<script>\n" + sprites + layers + "</script>\n<script>", 1)
 (root / "index.html").write_text(out)
 print(f"built index.html ({len(out) // 1024} KB)")
