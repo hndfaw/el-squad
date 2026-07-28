@@ -1,8 +1,18 @@
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#3d2382">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="El Squad">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <title>El Squad — Retro Rescue</title>
 <style>
   html,body{height:100%;}
   body{margin:0;background:#070417;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;
+    overscroll-behavior:none;-webkit-touch-callout:none;
     font-family:ui-rounded,"SF Pro Rounded",Quicksand,"Comic Sans MS",monospace;}
   #game{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;
     image-rendering:pixelated;image-rendering:crisp-edges;background:#070417;}
@@ -10,12 +20,12 @@
     border-radius:10px;font-size:22px;font-weight:800;font-family:inherit;
     box-shadow:0 0 12px rgba(255,79,163,.5), inset 0 0 8px rgba(255,79,163,.25);cursor:pointer;}
   .btn:active{background:rgba(255,79,163,.35);}
-  #muteBtn{top:12px;right:12px;width:44px;height:44px;font-size:18px;}
-  #modeBtn{top:12px;right:66px;height:44px;padding:0 14px;font-size:14px;}
+  #muteBtn{top:calc(12px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right));width:44px;height:44px;font-size:18px;}
+  #modeBtn{top:calc(12px + env(safe-area-inset-top));right:calc(66px + env(safe-area-inset-right));height:44px;padding:0 14px;font-size:14px;}
   .auto #leftBtn,.auto #rightBtn{display:none !important;}
-  #leftBtn,#rightBtn{bottom:24px;width:70px;height:70px;display:none;}
-  #leftBtn{left:20px;} #rightBtn{left:104px;}
-  #jumpBtn{right:24px;bottom:24px;width:86px;height:86px;display:none;border-color:#4fd8ff;color:#aee9ff;
+  #leftBtn,#rightBtn{bottom:calc(24px + env(safe-area-inset-bottom));width:70px;height:70px;display:none;}
+  #leftBtn{left:calc(20px + env(safe-area-inset-left));} #rightBtn{left:calc(104px + env(safe-area-inset-left));}
+  #jumpBtn{right:calc(24px + env(safe-area-inset-right));bottom:calc(24px + env(safe-area-inset-bottom));width:86px;height:86px;display:none;border-color:#4fd8ff;color:#aee9ff;
     box-shadow:0 0 12px rgba(79,216,255,.5), inset 0 0 8px rgba(79,216,255,.25);border-radius:50%;font-size:16px;}
   .touch #leftBtn,.touch #rightBtn,.touch #jumpBtn{display:block;}
 </style>
@@ -48,6 +58,8 @@ function fit(){
 }
 fit();
 addEventListener('resize',fit);
+// PWA: offline support when served from a real origin (fails silently elsewhere)
+if('serviceWorker' in navigator){try{navigator.serviceWorker.register('sw.js').catch(()=>{});}catch(e){}}
 
 /* ============================= PIXEL FONT 4/5x5 ============================= */
 const FONT={
