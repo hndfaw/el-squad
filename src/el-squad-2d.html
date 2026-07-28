@@ -226,15 +226,16 @@ cv.addEventListener('pointerdown',e=>{const p=canvasPoint(e);clickAt(p.x,p.y);})
 /* ============================= WORLD ============================= */
 const GROUND=232;
 const THEMES=[
+ // round 1: Erbil at dusk — warm lantern glow
  {erbil:true,
-  sky:['#251a52','#3d2382','#7a3aa8','#2c1f62'],sun:['#ffd94f','#ff7a5c','#ff4fa3'],sunMask:'#3d2382',
-  horizon:'rgba(255,170,80,0.3)',castle:'#4a3095',grid:'rgba(190,120,255,0.32)',
-  tri:['rgba(190,120,255,0.8)','rgba(120,225,255,0.8)'],groundFill:'#332268',groundEdge:'#ff4fa3',
-  groundLines:'rgba(255,120,190,0.25)',platFill:'#372a70',platEdge:'#4fd8ff',palm:'#ff9ad0',palmGlow:'#ff4fa3'},
- {sky:['#0e3450','#1a5a88','#2b86a8','#12405f'],sun:['#f5ffff','#b8f0ff','#5fdcff'],sunMask:'#1a5a88',
-  horizon:'rgba(120,225,255,0.3)',castle:'#2a6a99',grid:'rgba(140,230,255,0.3)',
-  tri:['rgba(140,230,255,0.8)','rgba(255,222,110,0.8)'],groundFill:'#1c4a70',groundEdge:'#5fdcff',
-  groundLines:'rgba(140,230,255,0.25)',platFill:'#215279',platEdge:'#ffd94f',palm:'#9aeeff',palmGlow:'#5fdcff'},
+  haze:'rgba(255,150,60,0.16)',tint:null,
+  bazaar:{cap:'#dcc4a4',capHi:'#efdcbc',capSep:'#a98c6d',capShadow:'rgba(90,60,40,0.55)',
+          wall:'#3a2145',motif:'#6d3e78',accent:'#c9743e',seam:'rgba(0,0,0,0.22)',band:'rgba(200,150,90,0.28)'}},
+ // round 2: same city at deep midnight — cool tint, darker masonry
+ {erbil:true,
+  haze:'rgba(110,140,255,0.10)',tint:'rgba(25,20,80,0.32)',
+  bazaar:{cap:'#bda789',capHi:'#d6c3a5',capSep:'#8d735c',capShadow:'rgba(50,35,60,0.6)',
+          wall:'#251538',motif:'#503066',accent:'#a05a92',seam:'rgba(0,0,0,0.28)',band:'rgba(160,130,200,0.25)'}},
 ];
 let TH=THEMES[0];
 // power-ups: eat one for an 8 second boost
@@ -424,39 +425,42 @@ function bgErbil(camX){
   const ci=SCENE.city,iw=560,ih=iw*ci.h/ci.w,step=iw-70;
   let sx=-((camX*0.35)%step)-step;
   for(let x=sx;x<W+iw;x+=step)cx.drawImage(ci.img,x,238-ih,iw,ih);
-  // warm lantern haze where rooftops meet the bazaar
+  // lantern haze where rooftops meet the bazaar (warm at dusk, cool at midnight)
   const hz=cx.createLinearGradient(0,160,0,238);
-  hz.addColorStop(0,'rgba(255,170,80,0)');hz.addColorStop(1,'rgba(255,150,60,0.16)');
+  hz.addColorStop(0,'rgba(255,170,80,0)');hz.addColorStop(1,TH.haze);
   cx.fillStyle=hz;cx.fillRect(0,160,W,78);
   cx.restore();
+  // round 2: cool midnight tint over the whole scene (world draws on top untinted)
+  if(TH.tint){cx.fillStyle=TH.tint;cx.fillRect(0,0,W,H);}
 }
 // procedural bazaar masonry (layer 1 style) — drawn in code so platforms,
 // holes, and stairs can take any shape while matching the reference art
 function bazaarRect(x,y,w,h){
-  // patterned purple wall
-  cx.fillStyle='#3a2145';cx.fillRect(x,y+6,w,h-6);
+  const B=TH.bazaar;
+  // patterned wall
+  cx.fillStyle=B.wall;cx.fillRect(x,y+6,w,h-6);
   const bandB=Math.min(y+6+30,y+h);
   // diamond motif band (only on walls tall enough to hold it)
   if(h>=30)for(let dx0=x+14;dx0<x+w-8;dx0+=26){
     const cyy=y+19;
-    cx.fillStyle='#6d3e78';
+    cx.fillStyle=B.motif;
     cx.beginPath();cx.moveTo(dx0,cyy-6);cx.lineTo(dx0+6,cyy);cx.lineTo(dx0,cyy+6);cx.lineTo(dx0-6,cyy);cx.closePath();cx.fill();
-    cx.fillStyle='#c9743e';cx.fillRect(dx0-1,cyy-1,2,2);
+    cx.fillStyle=B.accent;cx.fillRect(dx0-1,cyy-1,2,2);
   }
   if(y+h>bandB+4){
-    cx.strokeStyle='rgba(200,150,90,0.28)';cx.lineWidth=1;
+    cx.strokeStyle=B.band;cx.lineWidth=1;
     cx.beginPath();cx.moveTo(x,bandB+2.5);cx.lineTo(x+w,bandB+2.5);cx.stroke();
     // faint stone seams below
-    cx.strokeStyle='rgba(0,0,0,0.22)';
+    cx.strokeStyle=B.seam;
     for(let yy=bandB+16;yy<y+h;yy+=18){cx.beginPath();cx.moveTo(x,yy);cx.lineTo(x+w,yy);cx.stroke();}
-    for(let xx=x+13;xx<x+w;xx+=26){cx.beginPath();cx.moveTo(xx,bandB+4);cx.lineTo(xx,Math.min(xx%2?y+h:y+h,y+h));cx.stroke();}
+    for(let xx=x+13;xx<x+w;xx+=26){cx.beginPath();cx.moveTo(xx,bandB+4);cx.lineTo(xx,y+h);cx.stroke();}
   }
   // light stone cap
-  cx.fillStyle='#dcc4a4';cx.fillRect(x,y,w,6);
-  cx.fillStyle='#efdcbc';cx.fillRect(x,y,w,2);
-  cx.fillStyle='#a98c6d';
+  cx.fillStyle=B.cap;cx.fillRect(x,y,w,6);
+  cx.fillStyle=B.capHi;cx.fillRect(x,y,w,2);
+  cx.fillStyle=B.capSep;
   for(let bx=x+20;bx<x+w;bx+=20)cx.fillRect(bx,y+1,1,5);
-  cx.fillStyle='rgba(90,60,40,0.55)';cx.fillRect(x,y+6,w,1);
+  cx.fillStyle=B.capShadow;cx.fillRect(x,y+6,w,1);
 }
 function bg(camX){
   if(TH.erbil){bgErbil(camX);return;}
@@ -530,6 +534,10 @@ function drawWorld(){
   }
   // grounds + platforms: bazaar masonry in the Erbil theme, neon otherwise
   if(TH.erbil){
+    // gaps read as pits: darken everything below street level before drawing the walls
+    const pit=cx.createLinearGradient(0,GROUND,0,GROUND+90);
+    pit.addColorStop(0,'rgba(14,8,24,0.2)');pit.addColorStop(1,'#0e0818');
+    cx.fillStyle=pit;cx.fillRect(c-10,GROUND,W+20,H-offY-GROUND);
     for(const g of level.grounds)bazaarRect(g[0],GROUND,g[1],H-offY-GROUND);
     for(const pl of level.plats)bazaarRect(pl[0],pl[1],pl[2],12);
   }else{
@@ -559,31 +567,50 @@ function drawWorld(){
     }
     cx.restore();
   }
-  // spikes
+  // copper spikes on a dark base plate
   for(const sx of level.spikes){
-    cx.save();cx.shadowColor='#ff5c5c';cx.shadowBlur=8;cx.fillStyle='#ff5c5c';
+    cx.save();cx.shadowColor='#ff8a4f';cx.shadowBlur=7;
+    cx.fillStyle='#5a3226';cx.fillRect(sx-13,GROUND-2,26,2);
     for(let k=-1;k<=1;k++){
-      cx.beginPath();cx.moveTo(sx+k*8-4,GROUND);cx.lineTo(sx+k*8+4,GROUND);cx.lineTo(sx+k*8,GROUND-11);cx.closePath();cx.fill();
+      cx.fillStyle='#d95f35';
+      cx.beginPath();cx.moveTo(sx+k*8-4,GROUND-1);cx.lineTo(sx+k*8+4,GROUND-1);cx.lineTo(sx+k*8,GROUND-12);cx.closePath();cx.fill();
+      cx.fillStyle='#ffa06a';
+      cx.beginPath();cx.moveTo(sx+k*8,GROUND-12);cx.lineTo(sx+k*8+2,GROUND-4);cx.lineTo(sx+k*8-1,GROUND-4);cx.closePath();cx.fill();
     }
     cx.restore();
   }
-  // checkpoints
+  // checkpoints: bazaar lantern posts (lit gold once passed)
   for(const ck of level.checks){
     const on=P&&P['c'+ck];
-    cx.fillStyle=on?'#4fd84f':'#8888aa';cx.fillRect(ck-1,GROUND-34,2,34);
-    cx.fillStyle=on?'#4fd84f':'#a04fff';
-    cx.beginPath();cx.moveTo(ck+1,GROUND-34);cx.lineTo(ck+15,GROUND-29);cx.lineTo(ck+1,GROUND-24);cx.closePath();cx.fill();
+    cx.fillStyle='#6b4a33';cx.fillRect(ck-1,GROUND-36,2,36);
+    cx.fillRect(ck-1,GROUND-36,11,2);
+    const lx=ck+9,ly=GROUND-33;
+    cx.save();
+    if(on){cx.shadowColor='#ffca5f';cx.shadowBlur=10;}
+    cx.fillStyle='#3a2a20';cx.fillRect(lx-4,ly-2,8,2);
+    cx.fillStyle=on?'#ffd25f':'#565672';cx.fillRect(lx-3,ly,6,9);
+    cx.fillStyle=on?'#fff0b8':'#73738d';cx.fillRect(lx-1,ly+2,2,4);
+    cx.fillStyle='#3a2a20';cx.fillRect(lx-2,ly+9,4,2);
+    cx.restore();
   }
-  // finish castle
+  // finish: stone arch gate with a warm glow, like the citadel gate
   const fx=level.finish;
-  cx.save();cx.shadowColor='#ffd94f';cx.shadowBlur=10;
-  cx.fillStyle='#2a1560';
-  cx.fillRect(fx,GROUND-70,70,70);
-  cx.fillRect(fx-12,GROUND-50,16,50);cx.fillRect(fx+66,GROUND-50,16,50);
-  for(let i=0;i<4;i++)cx.fillStyle=i%2?'#ff4fa3':'#ffd94f',cx.fillRect(fx+4+i*17,GROUND-78,8,8);
-  cx.fillStyle='#0a0524';cx.fillRect(fx+22,GROUND-34,26,34);
+  cx.save();cx.shadowColor='#ffca6a';cx.shadowBlur=10;
+  cx.fillStyle='#b6976b';
+  cx.fillRect(fx-14,GROUND-62,18,62);cx.fillRect(fx+66,GROUND-62,18,62);
+  cx.fillRect(fx-14,GROUND-76,98,16);
+  cx.fillStyle='#8d7350';
+  for(let i=0;i<5;i++)cx.fillRect(fx-12+i*20,GROUND-82,10,6);
+  cx.fillStyle='#221226';
+  cx.beginPath();cx.moveTo(fx+8,GROUND);cx.lineTo(fx+8,GROUND-38);
+  cx.quadraticCurveTo(fx+35,GROUND-70,fx+62,GROUND-38);cx.lineTo(fx+62,GROUND);cx.closePath();cx.fill();
+  const gg=cx.createLinearGradient(0,GROUND-58,0,GROUND);
+  gg.addColorStop(0,'rgba(255,190,90,0)');gg.addColorStop(1,'rgba(255,190,90,0.4)');
+  cx.fillStyle=gg;
+  cx.beginPath();cx.moveTo(fx+8,GROUND);cx.lineTo(fx+8,GROUND-38);
+  cx.quadraticCurveTo(fx+35,GROUND-70,fx+62,GROUND-38);cx.lineTo(fx+62,GROUND);cx.closePath();cx.fill();
   cx.restore();
-  drawText('GOAL',fx+12,GROUND-58,2,'#ffd94f','#ffd94f');
+  drawText('GOAL',fx+16,GROUND-56,2,'#ffd94f','#ffd94f');
   // stars
   for(const s of level.stars){
     if(s.got)continue;
@@ -598,11 +625,15 @@ function drawWorld(){
   for(const b of level.bouncers){
     const bx=b[0]+Math.sin(tGlobal*1.5+b[0])*b[1]*0.4;
     const sq=1+Math.sin(tGlobal*6)*0.12;
+    // bouncy bazaar cushion (pouf) with gold trim and a tassel
     cx.save();cx.translate(bx,GROUND);cx.scale(1/sq,sq);
-    cx.shadowColor='#ff4fa3';cx.shadowBlur=8;
-    cx.fillStyle='#ff4fa3';
-    cx.beginPath();cx.arc(0,-8,10,Math.PI,0);cx.fill();cx.fillRect(-10,-8,20,8);
-    cx.fillStyle='#ffffff';cx.fillRect(-5,-10,3,3);cx.fillRect(2,-10,3,3);
+    cx.shadowColor='#e8628a';cx.shadowBlur=6;
+    cx.fillStyle='#b03f66';
+    cx.beginPath();cx.arc(0,-7,11,Math.PI,0);cx.fill();cx.fillRect(-11,-7,22,4);
+    cx.fillStyle='#d76a92';cx.fillRect(-7,-11,14,2);
+    cx.fillStyle='#e8b04f';cx.fillRect(-11,-3,22,3);
+    cx.fillStyle='#e8b04f';cx.beginPath();cx.arc(0,-19,2,0,Math.PI*2);cx.fill();
+    cx.fillStyle='#2a1626';cx.fillRect(-5,-14,3,3);cx.fillRect(2,-14,3,3);
     cx.restore();
   }
   // particles
