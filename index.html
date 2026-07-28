@@ -207,14 +207,14 @@ cv.addEventListener('pointerdown',e=>{const p=canvasPoint(e);clickAt(p.x,p.y);})
 /* ============================= WORLD ============================= */
 const GROUND=232;
 const THEMES=[
- {sky:['#0a0524','#1c0d4a','#4a1560','#0a0524'],sun:['#ffd94f','#ff7a5c','#ff4fa3'],sunMask:'#1c0d4a',
-  horizon:'rgba(255,79,163,0.25)',castle:'#2a1560',grid:'rgba(160,79,255,0.22)',
-  tri:['rgba(160,79,255,0.7)','rgba(79,216,255,0.7)'],groundFill:'#180d38',groundEdge:'#ff4fa3',
-  groundLines:'rgba(255,79,163,0.15)',platFill:'#1c1048',platEdge:'#4fd8ff',palm:'#ff7ac0',palmGlow:'#ff4fa3'},
- {sky:['#020f1c','#07304f','#0e5a70','#020f1c'],sun:['#eaffff','#9fe8ff','#4fd8ff'],sunMask:'#07304f',
-  horizon:'rgba(79,216,255,0.25)',castle:'#123a5c',grid:'rgba(79,216,255,0.20)',
-  tri:['rgba(79,216,255,0.7)','rgba(255,217,79,0.7)'],groundFill:'#081c2e',groundEdge:'#4fd8ff',
-  groundLines:'rgba(79,216,255,0.15)',platFill:'#0e2438',platEdge:'#ffd94f',palm:'#7ae8ff',palmGlow:'#4fd8ff'},
+ {sky:['#251a52','#3d2382','#7a3aa8','#2c1f62'],sun:['#ffd94f','#ff7a5c','#ff4fa3'],sunMask:'#3d2382',
+  horizon:'rgba(255,79,163,0.3)',castle:'#4a3095',grid:'rgba(190,120,255,0.32)',
+  tri:['rgba(190,120,255,0.8)','rgba(120,225,255,0.8)'],groundFill:'#332268',groundEdge:'#ff4fa3',
+  groundLines:'rgba(255,120,190,0.25)',platFill:'#372a70',platEdge:'#4fd8ff',palm:'#ff9ad0',palmGlow:'#ff4fa3'},
+ {sky:['#0e3450','#1a5a88','#2b86a8','#12405f'],sun:['#f5ffff','#b8f0ff','#5fdcff'],sunMask:'#1a5a88',
+  horizon:'rgba(120,225,255,0.3)',castle:'#2a6a99',grid:'rgba(140,230,255,0.3)',
+  tri:['rgba(140,230,255,0.8)','rgba(255,222,110,0.8)'],groundFill:'#1c4a70',groundEdge:'#5fdcff',
+  groundLines:'rgba(140,230,255,0.25)',platFill:'#215279',platEdge:'#ffd94f',palm:'#9aeeff',palmGlow:'#5fdcff'},
 ];
 let TH=THEMES[0];
 // power-ups: eat one for an 8 second boost
@@ -567,10 +567,10 @@ function starShape(x,y,r,color){
 function scanlines(){
   cx.save();cx.setTransform(1,0,0,1,0,0);
   const DW=W*DPR,DH=H*DPR;
-  cx.fillStyle='rgba(0,0,0,0.13)';
+  cx.fillStyle='rgba(0,0,0,0.09)';
   for(let y=0;y<DH;y+=3)cx.fillRect(0,y,DW,1);
   const vg=cx.createRadialGradient(DW/2,DH/2,DH*0.5,DW/2,DH/2,DH*0.95);
-  vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(5,0,20,0.45)');
+  vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(5,0,20,0.25)');
   cx.fillStyle=vg;cx.fillRect(0,0,DW,DH);
   cx.restore();
 }
