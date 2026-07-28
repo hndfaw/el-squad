@@ -252,22 +252,22 @@ const THEMES=[
   bazaar:{cap:'#d8bc9c',capHi:'#ecd6b4',capSep:'#a2846a',capShadow:'rgba(80,45,70,0.55)',
           wall:'#33184a',motif:'#7a3a92',accent:'#e05a8a',seam:'rgba(0,0,0,0.24)',band:'rgba(240,150,220,0.25)'}},
  // rounds 5-8: the mountain fig city — sandy stone, canyon, terraced village
- {city2:true, // r5: fig orchard at dusk
-  haze:'rgba(255,140,160,0.18)',tint:null,
-  sand:{cap:'#e2c896',capHi:'#f2dcb2',capSep:'#b09468',capShadow:'rgba(110,80,40,0.5)',
-        wall:'#b98d5c',brick:'rgba(60,35,15,0.25)',motif:'#8a6a3e',accent:'#6a9a4e'}},
+ {city2:true, // r5: fig orchard at dusk — muted stone, player carries the light
+  haze:'rgba(255,140,160,0.14)',tint:null,
+  sand:{cap:'#c9ad7e',capHi:'#dcc296',capSep:'#96794f',capShadow:'rgba(80,58,30,0.55)',
+        wall:'#8f6c46',brick:'rgba(45,26,12,0.28)',motif:'#6d5230',accent:'#5a8442'}},
  {city2:true, // r6: canyon winds
-  haze:'rgba(180,160,255,0.14)',tint:'rgba(60,40,120,0.18)',
-  sand:{cap:'#d2b686',capHi:'#e4cca4',capSep:'#a08458',capShadow:'rgba(90,65,40,0.55)',
-        wall:'#a37c50',brick:'rgba(50,30,15,0.28)',motif:'#7a5c36',accent:'#5a8a6e'}},
+  haze:'rgba(180,160,255,0.10)',tint:'rgba(45,30,100,0.24)',
+  sand:{cap:'#b59a70',capHi:'#c9ae84',capSep:'#8a6f4a',capShadow:'rgba(70,50,32,0.6)',
+        wall:'#7d5f3e',brick:'rgba(40,24,12,0.3)',motif:'#5c452a',accent:'#4a7a5e'}},
  {city2:true, // r7: stone lifts by night
-  haze:'rgba(140,120,255,0.12)',tint:'rgba(20,15,70,0.30)',
-  sand:{cap:'#c2a678',capHi:'#d6bc94',capSep:'#907450',capShadow:'rgba(60,45,40,0.6)',
-        wall:'#8d6a44',brick:'rgba(40,25,15,0.3)',motif:'#6a4e30',accent:'#7a6ab0'}},
+  haze:'rgba(140,120,255,0.10)',tint:'rgba(14,10,55,0.36)',
+  sand:{cap:'#a58a62',capHi:'#b89e78',capSep:'#7a6144',capShadow:'rgba(50,38,34,0.65)',
+        wall:'#6d5236',brick:'rgba(32,20,12,0.32)',motif:'#523c24',accent:'#6a5aa0'}},
  {city2:true,fireworks:true, // r8: the great fig harvest
-  haze:'rgba(255,120,200,0.16)',tint:'rgba(120,30,110,0.16)',
-  sand:{cap:'#dcbe8e',capHi:'#eed6ac',capSep:'#a88a5c',capShadow:'rgba(100,50,80,0.5)',
-        wall:'#ab7e52',brick:'rgba(60,25,40,0.26)',motif:'#8a5a6e',accent:'#b05a9e'}},
+  haze:'rgba(255,120,200,0.12)',tint:'rgba(90,22,85,0.26)',
+  sand:{cap:'#bfa276',capHi:'#d2b88c',capSep:'#8f744c',capShadow:'rgba(80,40,64,0.55)',
+        wall:'#8a6642',brick:'rgba(50,22,34,0.28)',motif:'#6d4a56',accent:'#a04a8a'}},
 ];
 let TH=THEMES[0];
 // power-ups: eat one for an 8 second boost
@@ -697,6 +697,8 @@ function bgCity2(camX){
   hz.addColorStop(0,'rgba(255,170,80,0)');hz.addColorStop(1,TH.haze);
   cx.fillStyle=hz;cx.fillRect(0,160,W,80);
   cx.restore();
+  // dusk dimmer: keep the village/canyon subdued so the player carries the contrast
+  cx.fillStyle='rgba(20,12,38,0.30)';cx.fillRect(0,0,W,H);
   if(TH.tint){cx.fillStyle=TH.tint;cx.fillRect(0,0,W,H);}
   if(TH.fireworks){
     for(const p of fw){
