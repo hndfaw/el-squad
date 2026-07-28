@@ -236,6 +236,16 @@ const THEMES=[
   haze:'rgba(110,140,255,0.10)',tint:'rgba(25,20,80,0.32)',
   bazaar:{cap:'#bda789',capHi:'#d6c3a5',capSep:'#8d735c',capShadow:'rgba(50,35,60,0.6)',
           wall:'#251538',motif:'#503066',accent:'#a05a92',seam:'rgba(0,0,0,0.28)',band:'rgba(160,130,200,0.25)'}},
+ // round 3: golden dawn — ride the magic carpets
+ {erbil:true,
+  haze:'rgba(255,190,110,0.24)',tint:'rgba(255,160,80,0.16)',
+  bazaar:{cap:'#e8d2ae',capHi:'#f6e6c6',capSep:'#b5977a',capShadow:'rgba(120,80,40,0.5)',
+          wall:'#4a2a44',motif:'#8a4a6a',accent:'#d98a3e',seam:'rgba(0,0,0,0.2)',band:'rgba(230,180,110,0.3)'}},
+ // round 4: festival night — fireworks and runaway melons
+ {erbil:true,fireworks:true,
+  haze:'rgba(255,120,200,0.14)',tint:'rgba(110,30,140,0.16)',
+  bazaar:{cap:'#d8bc9c',capHi:'#ecd6b4',capSep:'#a2846a',capShadow:'rgba(80,45,70,0.55)',
+          wall:'#33184a',motif:'#7a3a92',accent:'#e05a8a',seam:'rgba(0,0,0,0.24)',band:'rgba(240,150,220,0.25)'}},
 ];
 let TH=THEMES[0];
 // power-ups: eat one for an 8 second boost
@@ -267,6 +277,30 @@ const LEVELS=[
    [1460,145],[1560,190],[1660,178],[1760,190],
    [1865,145],[2015,85],[2045,85],[2215,138],[2255,138],
    [2545,145],[2650,190],[2750,125],[2850,178],[2950,165],[3050,178]]},
+ // round 3: wide gaps crossed on drifting magic carpets
+ {grounds:[[-40,400],[440,240],[840,220],[1240,260],[1660,240],[2080,220],[2480,200],[2820,560]],
+  plats:[[480,160,70],[1280,150,70],[2120,148,70]],
+  spikes:[200,560,940,1350,1780,2180,2550,2950],
+  carpets:[{x:730,y:190,w:60,rx:60,ry:0,sp:1.2,ph:0},{x:1130,y:182,w:60,rx:70,ry:10,sp:1.4,ph:2},
+           {x:1560,y:186,w:60,rx:60,ry:0,sp:1.2,ph:4},{x:1965,y:176,w:60,rx:70,ry:12,sp:1.5,ph:1},
+           {x:2370,y:186,w:60,rx:60,ry:0,sp:1.3,ph:3},{x:2735,y:190,w:56,rx:40,ry:16,sp:1.6,ph:5}],
+  bouncers:[[300,50],[1900,60]],checks:[1240,2480],finish:3240,end:3380,
+  powList:[[160,'jump'],[900,'shield'],[1700,'speed'],[2500,'shield']],
+  starList:[[150,190],[240,175],[330,190],[490,140],[520,140],[600,190],[760,150],[790,150],
+   [900,190],[1000,175],[1160,145],[1190,145],[1310,130],[1400,190],[1590,150],[1620,150],
+   [1750,190],[1990,140],[2020,140],[2150,128],[2250,190],[2400,150],[2430,150],[2600,190],
+   [2760,155],[2900,190],[3000,175],[3100,190],[560,90],[1360,90],[2200,88],[2950,120],[430,100],[1870,100]]},
+ // round 4: festival finale — fireworks above, melons rolling out of the stalls
+ {grounds:[[-40,560],[600,420],[1100,480],[1660,420],[2160,460],[2700,700]],
+  plats:[[540,170,70],[1040,165,70],[1600,168,70],[2100,160,70],[2640,170,80],[300,120,60],[1350,115,60],[2400,110,60]],
+  spikes:[260,700,900,1300,1500,1900,2350,2900,3100],
+  rollers:[{sx:500,dir:-1,every:2.6},{sx:1560,dir:-1,every:2.4},{sx:2600,dir:-1,every:2.2}],
+  bouncers:[[800,60],[1800,60],[2500,50]],checks:[1100,2160],finish:3320,end:3460,
+  powList:[[180,'shield'],[1150,'jump'],[1750,'shield'],[2250,'speed'],[2750,'shield']],
+  starList:[[140,190],[260,175],[380,190],[560,150],[590,150],[700,190],[860,175],[1060,145],
+   [1090,145],[1200,190],[1370,95],[1400,95],[1500,190],[1620,148],[1650,148],[1800,190],
+   [1950,175],[2120,140],[2150,140],[2300,190],[2420,90],[2450,90],[2600,190],[2660,150],
+   [2800,175],[2950,190],[3100,175],[3250,190],[330,100],[1350,190],[1900,120],[2900,120]]},
 ];
 LEVELS.forEach(L=>{
   L.stars=L.starList.map(s=>({x:s[0],y:s[1],got:false,ph:Math.random()*6}));
@@ -282,20 +316,26 @@ let P=null; // player
 let cam=0,tGlobal=0;
 let toasts=[],parts=[];
 let jumpQueued=0;
+let melons=[],fw=[],fwT=0;
+const FW_COLS=['#ffd94f','#ff6a9e','#7ae8ff','#b08aff','#8fe08a'];
 
 function startGame(r){
   round=r||0;level=LEVELS[round];TH=THEMES[round];
   const ch=CHARS[sel];
   P={ch,x:40,y:GROUND,vx:0,vy:0,onG:true,flip:false,walk:0,stars:0,check:{x:40,y:GROUND},won:false,coyote:0,landT:0,hurtT:0,pow:{jump:0,speed:0,shield:0}};
-  cam=0;toasts=[];parts=[];
+  cam=0;toasts=[];parts=[];melons=[];fw=[];fwT=0.5;
   level.stars.forEach(s=>s.got=false);
   level.pows.forEach(p=>p.got=false);
+  if(level.carpets)level.carpets.forEach(cp=>{cp.cx=cp.x;cp.cy=cp.y;cp.dx=0;cp.dy=0;});
+  if(level.rollers)level.rollers.forEach(sp=>sp.t=sp.every*0.6);
   state='play';
   sfx.choose();startMusic();
-  toast(round===0?('GO '+ch.name+'!'):'ROUND 2 - DODGE THE SPIKES!',round===0?ch.neon:'#ff5c5c');
+  const RT=[['GO '+ch.name+'!',ch.neon],['ROUND 2 - DODGE THE SPIKES!','#ff8a5f'],
+            ['ROUND 3 - RIDE THE MAGIC CARPETS!','#e8b04f'],['ROUND 4 - FESTIVAL MELON MAYHEM!','#ff6a9e']];
+  toast(RT[round][0],RT[round][1]);
 }
 function winAdvance(){
-  if(round===0)startGame(1);
+  if(round<LEVELS.length-1)startGame(round+1);
   else{round=0;TH=THEMES[0];state='select';sfx.blip();}
 }
 function toast(msg,color){toasts.push({msg,color,t:2});}
@@ -327,6 +367,17 @@ function update(dt){
   toasts.forEach(t=>t.t-=dt);toasts=toasts.filter(t=>t.t>0);
   parts.forEach(p=>{p.vy+=300*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.t-=dt;});
   parts=parts.filter(p=>p.t>0);
+  // festival fireworks (screen-space, drawn by the background)
+  if(TH.fireworks){
+    fwT-=dt;
+    if(fwT<=0){
+      fwT=0.9+Math.random()*0.8;
+      const fx0=40+Math.random()*(W-80),fy0=26+Math.random()*70,col=FW_COLS[Math.floor(Math.random()*FW_COLS.length)];
+      for(let i=0;i<16;i++){const a=i/16*Math.PI*2,s=26+Math.random()*30;fw.push({x:fx0,y:fy0,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:1.1,color:col});}
+      if(!muted&&AC)tone(90+Math.random()*40,AC.currentTime,0.4,'triangle',0.03,60);
+    }
+    for(let i=fw.length-1;i>=0;i--){const p=fw[i];p.vy+=18*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.t-=dt;if(p.t<=0)fw.splice(i,1);}
+  }
   if(state==='select'){selT+=dt;return;}
   if(state!=='play')return;
   const ch=P.ch;
@@ -347,6 +398,13 @@ function update(dt){
   if(P.x<10)P.x=10;
   P.y+=P.vy*dt;
   P.coyote-=dt;
+  // magic carpets drift on their own paths
+  if(level.carpets)for(const cp of level.carpets){
+    const ncx=cp.x+Math.sin(tGlobal*cp.sp+cp.ph)*cp.rx;
+    const ncy=cp.y+Math.sin(tGlobal*cp.sp*0.7+cp.ph)*cp.ry;
+    cp.dx=ncx-cp.cx;cp.dy=ncy-cp.cy;cp.cx=ncx;cp.cy=ncy;
+  }
+  P.carpet=null;
   // land on ground
   const g=groundAt(P.x);
   if(g!==null&&P.vy>=0&&P.y>=g){P.y=g;P.vy=0;if(!P.onG){burst(P.x,P.y,'#ffffff',3);P.landT=0.14;}P.onG=true;}
@@ -356,9 +414,16 @@ function update(dt){
     if(P.vy>=0)for(const pl of level.plats){
       if(P.x>pl[0]-8&&P.x<pl[0]+pl[2]+8&&P.y>=pl[1]&&P.y-P.vy*dt<=pl[1]+8){P.y=pl[1];P.vy=0;landed=true;break;}
     }
+    if(!landed&&P.vy>=0&&level.carpets)for(const cp of level.carpets){
+      if(P.x>cp.cx-6&&P.x<cp.cx+cp.w+6&&P.y>=cp.cy&&P.y-P.vy*dt<=cp.cy+9){
+        P.y=cp.cy;P.vy=0;landed=true;P.carpet=cp;break;
+      }
+    }
     if(landed){if(!P.onG){burst(P.x,P.y,'#ffffff',3);P.landT=0.14;}P.onG=true;}
     else{if(P.onG)P.coyote=0.12;P.onG=false;}
   }
+  // riding a carpet carries you with it
+  if(P.onG&&P.carpet){P.x+=P.carpet.dx;P.y=P.carpet.cy;}
   // bouncers
   for(const b of level.bouncers){
     const bx=b[0]+Math.sin(tGlobal*1.5+b[0])*b[1]*0.4;
@@ -396,6 +461,26 @@ function update(dt){
       break;
     }
   }
+  // runaway melons from the festival stalls
+  if(level.rollers){
+    for(const sp of level.rollers){
+      sp.t-=dt;
+      if(sp.t<=0){sp.t=sp.every;if(Math.abs(sp.sx-P.x)<W+120)melons.push({x:sp.sx,y:GROUND,vx:sp.dir*85,vy:0,rot:0});}
+    }
+    for(let i=melons.length-1;i>=0;i--){
+      const m=melons[i];
+      m.x+=m.vx*dt;m.rot+=m.vx*dt*0.06;
+      if(groundAt(m.x)===null){m.vy+=600*dt;m.y+=m.vy*dt;}
+      if(m.y>BAND+80||m.x<P.x-700||m.x>P.x+900){melons.splice(i,1);continue;}
+      if(Math.abs(P.x-m.x)<13&&P.y>m.y-18&&P.hurtT<=0){
+        if(P.pow.shield>0){burst(m.x,m.y-8,'#8fe08a',10);sfx.bounce();melons.splice(i,1);continue;}
+        P.hurtT=0.9;P.vy=-190;P.x-=30;P.onG=false;
+        if(P.stars>0){P.stars--;toast('OUCH! -1 STAR','#ff5c5c');}
+        else toast('OUCH!','#ff5c5c');
+        sfx.hurt();burst(m.x,m.y-8,'#8fe08a',12);melons.splice(i,1);
+      }
+    }
+  }
   // checkpoints
   for(const c of level.checks){
     if(!P['c'+c]&&Math.abs(P.x-c)<10){P['c'+c]=true;P.check={x:c,y:GROUND};sfx.check();toast('CHECKPOINT!','#4fd8ff');burst(c,GROUND-30,'#4fd8ff',10);}
@@ -430,8 +515,16 @@ function bgErbil(camX){
   hz.addColorStop(0,'rgba(255,170,80,0)');hz.addColorStop(1,TH.haze);
   cx.fillStyle=hz;cx.fillRect(0,160,W,78);
   cx.restore();
-  // round 2: cool midnight tint over the whole scene (world draws on top untinted)
+  // time-of-day tint over the whole scene (world draws on top untinted)
   if(TH.tint){cx.fillStyle=TH.tint;cx.fillRect(0,0,W,H);}
+  // festival fireworks
+  if(TH.fireworks){
+    for(const p of fw){
+      cx.globalAlpha=Math.max(0,Math.min(1,p.t));
+      cx.fillStyle=p.color;cx.fillRect(p.x-1,p.y-1,2,2);
+    }
+    cx.globalAlpha=1;
+  }
 }
 // procedural bazaar masonry (layer 1 style) — drawn in code so platforms,
 // holes, and stairs can take any shape while matching the reference art
@@ -535,8 +628,8 @@ function drawWorld(){
   // grounds + platforms: bazaar masonry in the Erbil theme, neon otherwise
   if(TH.erbil){
     // gaps read as pits: darken everything below street level before drawing the walls
-    const pit=cx.createLinearGradient(0,GROUND,0,GROUND+90);
-    pit.addColorStop(0,'rgba(14,8,24,0.2)');pit.addColorStop(1,'#0e0818');
+    const pit=cx.createLinearGradient(0,GROUND,0,GROUND+55);
+    pit.addColorStop(0,'rgba(16,10,26,0.55)');pit.addColorStop(1,'#0e0818');
     cx.fillStyle=pit;cx.fillRect(c-10,GROUND,W+20,H-offY-GROUND);
     for(const g of level.grounds)bazaarRect(g[0],GROUND,g[1],H-offY-GROUND);
     for(const pl of level.plats)bazaarRect(pl[0],pl[1],pl[2],12);
@@ -566,6 +659,35 @@ function drawWorld(){
       cx.beginPath();cx.arc(it.x,by,3.5,0,Math.PI*2);cx.fill();
     }
     cx.restore();
+  }
+  // magic carpets
+  if(level.carpets)for(const cp of level.carpets){
+    cx.save();cx.translate(cp.cx,cp.cy);
+    cx.fillStyle='#b03a3a';
+    cx.beginPath();cx.moveTo(0,0);
+    for(let i=0;i<=cp.w;i+=8)cx.lineTo(i,Math.sin(tGlobal*4+i*0.4)*1.5);
+    cx.lineTo(cp.w,7);cx.lineTo(0,7);cx.closePath();cx.fill();
+    cx.fillStyle='#e8b04f';cx.fillRect(0,0,4,7);cx.fillRect(cp.w-4,0,4,7);
+    cx.fillStyle='#f0d9a0';for(let i=10;i<cp.w-8;i+=12)cx.fillRect(i,3,2,2);
+    cx.fillStyle='#e8b04f';cx.fillRect(-2,2,2,6);cx.fillRect(cp.w,2,2,6);
+    cx.restore();
+    if(Math.random()<0.12)parts.push({x:cp.cx+Math.random()*cp.w,y:cp.cy+9,vx:0,vy:14,t:0.35,color:'#ffd94f'});
+  }
+  // festival fruit stalls + runaway melons
+  if(level.rollers){
+    for(const sp of level.rollers){
+      cx.fillStyle='#7a4a2a';cx.fillRect(sp.sx-9,GROUND-9,18,9);
+      cx.fillStyle='#5d3820';cx.fillRect(sp.sx-9,GROUND-5,18,1);
+      cx.fillStyle='#3f8f4f';cx.beginPath();cx.arc(sp.sx,GROUND-13,5,0,Math.PI*2);cx.fill();
+    }
+    for(const m of melons){
+      cx.save();cx.translate(m.x,m.y-8);cx.rotate(m.rot);
+      cx.fillStyle='#3f8f4f';cx.beginPath();cx.arc(0,0,8,0,Math.PI*2);cx.fill();
+      cx.strokeStyle='#2e6e3a';cx.lineWidth=2;
+      for(let i=-1;i<=1;i++){cx.beginPath();cx.moveTo(i*4,-6);cx.quadraticCurveTo(i*6,0,i*4,6);cx.stroke();}
+      cx.fillStyle='rgba(255,255,255,0.25)';cx.beginPath();cx.arc(-3,-3,2.5,0,Math.PI*2);cx.fill();
+      cx.restore();
+    }
   }
   // copper spikes on a dark base plate
   for(const sx of level.spikes){
@@ -745,13 +867,15 @@ function drawWin(){
   drawWorld();
   cx.fillStyle='rgba(7,4,23,0.8)';cx.fillRect(0,0,W,H);
   cx.save();cx.translate(0,Math.round((H-BAND)*0.5));
-  drawTextC(round===0?'ROUND 1 CLEAR!':'YOU WIN!',W/2,36,5,'#ffd94f','#ffd94f');
-  drawTextC(round===0?(P.ch.name+' SAVED THE SUNSET'):(P.ch.name+' BEAT THE GAME!'),W/2,82,2,'#ffffff',P.ch.neon);
+  const last=round===LEVELS.length-1;
+  drawTextC(last?'YOU WIN!':('ROUND '+(round+1)+' CLEAR!'),W/2,36,5,'#ffd94f','#ffd94f');
+  drawTextC(last?(P.ch.name+' LIT UP THE NIGHT!'):(P.ch.name+' MADE IT THROUGH!'),W/2,82,2,'#ffffff',P.ch.neon);
   starShape(W/2-34,110,7,'#ffd94f');
   drawText(P.stars+'/'+level.stars.length+' STARS',W/2-20,104,2,'#ffd94f');
   drawChar(P.ch,W/2,224,small?1.8:1.3,false,F.WIN);
   const blink=Math.sin(tGlobal*4)>-0.3;
-  if(blink)drawTextC(round===0?'TAP FOR ROUND 2 - DODGE THE SPIKES!':'TAP TO PLAY AGAIN',W/2,242,2,round===0?'#ff5c5c':'#4fd8ff',round===0?'#ff5c5c':'#4fd8ff');
+  const NEXT_HINT=['DODGE THE SPIKES!','RIDE THE CARPETS!','FESTIVAL TIME!'];
+  if(blink)drawTextC(last?'TAP TO PLAY AGAIN':('TAP FOR ROUND '+(round+2)+' - '+NEXT_HINT[round]),W/2,242,2,last?'#4fd8ff':'#ffd94f',last?'#4fd8ff':'#ffd94f');
   for(const p of parts){cx.fillStyle=p.color;cx.globalAlpha=Math.min(1,p.t*2);cx.fillRect(p.x-cam-1,p.y-1,3,3);}
   cx.globalAlpha=1;
   cx.restore();
